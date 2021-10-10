@@ -1,0 +1,32 @@
+.controls,
+.controls > * {
+  height: 10vh;
+}
+.controls {
+  display:flex;
+  justify-content: space-between;
+}
+.path {
+  margin-bottom: 2em;
+  break-inside: avoid;
+}
+body{
+  column-count:2
+}
+
+.parent {
+display: grid;
+grid-column-gap: 0px;
+grid-row-gap: 0px;
+/*  height: 90vh; */
+}
+
+.ant { 
+  background: #000;
+  border: 1px solid #fff;
+  color: #fff;
+}
+
+.ant .pheromones {
+  color: #fff;
+}
