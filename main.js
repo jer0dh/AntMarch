@@ -19,7 +19,7 @@ for(let i=0; i<numberOfAnts;i++) {
     
   }
 }
-const pheromones = [ maxRows * maxWidth ];
+let pheromones = [ maxRows * maxWidth ];
 /* Initialize */
 for(let i=0; i< maxRows * maxWidth; i++) {
   pheromones[i] = 0.0001
@@ -55,8 +55,8 @@ for(let epoch=0; epoch<numberOfEpochs; epoch++) {
     }
   }
   //paths created time to update pheromones
-  evaporatePheromones(pheromones)
-  updatePheromones(paths, pheromones)
+  pheromones = evaporatePheromones(pheromones, P)
+  pheromones = updatePheromones(paths, pheromones)
 }
 
 for(let i=0; i<paths.length; i++) {
@@ -80,17 +80,18 @@ console.log('done');
 
 function updatePheromones(paths, pheromones) {
  
+  let returnPheromones = pheromones.slice();
   for(let i=0; i<paths.length; i++) {
     let pathLength = paths[i].length;
     if(pathLength < maxMovesPerEpochPerAnt) { //update pheromones!
 
       for(let j=0; j<paths[i].length; j++) {
-        
         let c = getCoordinates(paths[i][j])
-        pheromones[paths[i][j]] += (Q + j)/ pathLength  //page 84
+        returnPheromones[paths[i][j]] += (Q + (maxRows - c.y)**3)/ pathLength  //page 84
       }
     }
   }
+  return returnPheromones;
 }
 /* 
 NOTES: with formula equal to p = p + Q / pathLength the paths didn't get much farther then two squares past the starting point as the pheromones would be the strongest there.
@@ -98,10 +99,10 @@ NOTES: with formula equal to p = p + Q / pathLength the paths didn't get much fa
 Tried making it p + (Q + j*9)/pathLength to make the end of the path of stronger pheromones.  Minimal help
 
 */
-function evaporatePheromones(pheromones) {
-  for(let i=0; i<pheromones.length; i++) {
-    pheromones[i] *= (1 - P); //page 84
-  }
+function evaporatePheromones(pheromones, rate) {
+  return pheromones.map( p => {
+    return p * (1 - rate); //page 84
+  })
 }
 
 //formulate/pick next neighbor index
