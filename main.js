@@ -213,11 +213,11 @@ function pickNext( neighbors ){
   
   const randomValue = Math.random();
   
-  neighborObjects.forEach( x => {
-    if (randomValue < x.percentage ) {
-      return x.index;
+  for( let y=0; y<neighborObjects.length; y++){
+    if (randomValue < neighborObjects[y].percentage ) {
+      return neighborObjects[y].index
     }
-  })
+  }
    
   //return last index with largest percentage
   return neighborObjects[neighborObjects.length-1].index
