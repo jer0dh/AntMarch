@@ -8,7 +8,7 @@ const maxWidth = 15;
 
 const numberOfAnts = 5;
 const numberOfEpochs = 5;
-const maxMovesPerEpochPerAnt = 300;
+const maxMovesPerEpochPerAnt = 50;
 const Q = 2 * maxRows; //Constant to scale the quality of a path. pg 84
 const P = 0.25; //Rate of pheromone evaporation. pg 84
 const paths = [numberOfAnts];
@@ -24,59 +24,78 @@ let pheromones = [ maxRows * maxWidth ];
 for(let i=0; i< maxRows * maxWidth; i++) {
   pheromones[i] = 0.0001
 }
+let counter = 0;
+let check = 40;
 
-for(let epoch=0; epoch<numberOfEpochs; epoch++) {
-  
+main();
+
+function main() {
+
+  for(let epoch=0; epoch<numberOfEpochs; epoch++) {
   
   //Create Paths based on numberOfAnts
-  for(let ant=0; ant<numberOfAnts; ant++){
-    //ant starts at bottom middle
-    let x = Math.floor( maxWidth / 2)
-    let y = maxRows - 1;
+    for(let ant=0; ant<numberOfAnts; ant++){
+      //ant starts at bottom middle
+      let x = Math.floor( maxWidth / 2)
+      let y = maxRows - 1;
 
-    //create path
-    paths[ant]= []
-    paths[ant].push( getIndex( x, y ))
-    let counter = 0
-    while( counter < maxMovesPerEpochPerAnt && ! madeIt( x, y) ) {
-      let neighbors = getNeighbors(x, y)
-      //get last coordinates from ant path and remove from neighbors
-      //so ant does not backtrack
-      let pos = neighbors.indexOf(paths[ant][paths[ant].length-2])
-      if (pos>-1) { //if found, remove
-        neighbors.splice( pos, 1);
-      }
-      let nextIndex = pickNext(neighbors)
-      paths[ant].push( nextIndex );
-      let newCoord = getCoordinates( nextIndex );
-      x = newCoord.x
-      y = newCoord.y
-      ++counter; 
+      //create path
+      paths[ant]= []
+      paths[ant].push( getIndex( x, y ))
+      let counter = 0
+      while( counter < maxMovesPerEpochPerAnt && ! madeIt( x, y) ) {
+        let neighbors = getNeighbors(x, y)
+        //get last coordinates from ant path and remove from neighbors
+        //so ant does not backtrack
+        neighbors = removeBacktrack( neighbors, paths[ant][paths[ant].length-2])
+        let nextIndex = pickNext(neighbors)
+        paths[ant].push( nextIndex );
+        let newCoord = getCoordinates( nextIndex );
+        x = newCoord.x
+        y = newCoord.y
+        ++counter; 
+      } 
     }
+    //paths created time to update pheromones
+    pheromones = evaporatePheromones(pheromones, P)
+    pheromones = updatePheromones(paths, pheromones)
   }
-  //paths created time to update pheromones
-  pheromones = evaporatePheromones(pheromones, P)
-  pheromones = updatePheromones(paths, pheromones)
+
+  for(let i=0; i<paths.length; i++) {
+    const grid = document.createElement('div')
+    grid.classList.add('path')
+    grid.classList.add('path' + i)
+    document.querySelector('body').append(grid)
+    createDom(grid)
+    updateGridStyle(grid)
+    drawPath(paths[i],grid)
+   // updatePheromones(paths, pheromones)
+  }
+
+  const aGrid = document.querySelector('.path1')
+  const bGrid = document.querySelector('.path2')
+  //const aGrid2 = document.querySelector('.path2')
+  addPheromonesToGrid(aGrid)
+  addIndexesToGrid(bGrid)
+  //evaporatePheromones(pheromones)
+  //addPheromonesToGrid(aGrid2)
+  console.log('done');
 }
 
-for(let i=0; i<paths.length; i++) {
-  const grid = document.createElement('div')
-  grid.classList.add('path')
-  grid.classList.add('path' + i)
-  document.querySelector('body').append(grid)
-  createDom(grid)
-  updateGridStyle(grid)
-  drawPath(paths[i],grid)
- // updatePheromones(paths, pheromones)
+// index is the coordinate to remove from neighbors
+function removeBacktrack(neighbors, index){
+  return neighbors.filter( x => {
+    return x !== index;
+  })
 }
 
-const aGrid = document.querySelector('.path1')
-//const aGrid2 = document.querySelector('.path2')
-addPheromonesToGrid(aGrid)
-//evaporatePheromones(pheromones)
-//addPheromonesToGrid(aGrid2)
-console.log('done');
-
+//testRemoveBacktrack()
+function testRemoveBacktrack() {
+  let neighbors = [113,114,115,128,130,143,144,145]
+  let index = 130
+  neighbors = removeBacktrack( neighbors, index )
+  console.log(neighbors)
+}
 
 function updatePheromones(paths, pheromones) {
  
@@ -87,7 +106,7 @@ function updatePheromones(paths, pheromones) {
 
       for(let j=0; j<paths[i].length; j++) {
         let c = getCoordinates(paths[i][j])
-        returnPheromones[paths[i][j]] += (Q + (maxRows - c.y)**3)/ pathLength  //page 84
+        returnPheromones[paths[i][j]] += (Q**2 + (maxRows - c.y)**9)/ pathLength  //page 84
       }
     }
   }
@@ -105,18 +124,69 @@ function evaporatePheromones(pheromones, rate) {
   })
 }
 
+
+function testPickNext() {
+   let neighborObjects = [ {
+      "index": 71,
+      "percentage": 0.025
+      },{
+      "index": 72,
+      "percentage": 0.025
+      },{
+      "index": 73,
+      "percentage": 0.2
+      },{
+      "index": 101,
+      "percentage": 0.1
+      },{
+      "index": 102,
+      "percentage": 0.6
+      },{
+      "index": 103,
+      "percentage": 0.025
+      },{
+      "index": 86,
+      "percentage": 0.025
+      },
+   ]
+     //sort based on percentage
+   neighborObjects = neighborObjects.sort( (a,b) => {
+    if(b.percentage < a.percentage ) {
+      return 1
+    } else if( b.percentage > a.percentage ) {
+      return -1
+    } else {
+      return 0
+    }
+   })
+
+ console.log( neighborObjects )
+  
+  const randomValue = Math.random();
+  console.log( randomValue )
+  for( let y=0; y<neighborObjects.length; y++){
+    if (randomValue < neighborObjects[y].percentage ) {
+      console.log('not last:', neighborObjects[y].index)
+      break;
+    }
+  }
+   
+  //return last index with largest percentage
+  console.log(neighborObjects[neighborObjects.length-1].index)
+}
 //formulate/pick next neighbor index
 function pickNext( neighbors ){
-  
+
   //get sum of surrounding pheromones
   let sum = neighbors.reduce( (total, index) => {
     return total + pheromones[index]
   },0)
-  //console.log(sum)
+
   //if sum is too low then randomly pick
   if(sum < 0.002) {
     return neighbors[Math.floor(Math.random()*neighbors.length)]
   }
+  
   //calulate each neighbor's pheromone percentage
   let percentage = neighbors.map( index => {
     return pheromones[index]/sum
@@ -127,7 +197,7 @@ function pickNext( neighbors ){
   neighbors.forEach( (n, i)=>{
     neighborObjects.push( {
       index: n,
-      percentage: pheromones[n]
+      percentage: percentage[i]
     })
   } )
   //sort based on percentage
@@ -139,7 +209,8 @@ function pickNext( neighbors ){
     } else {
       return 0
     }
-  })
+   })
+  
   const randomValue = Math.random();
   
   neighborObjects.forEach( x => {
@@ -147,6 +218,7 @@ function pickNext( neighbors ){
       return x.index;
     }
   })
+   
   //return last index with largest percentage
   return neighborObjects[neighborObjects.length-1].index
 }
